@@ -6,9 +6,15 @@ data class Location(
     val x: Int,
     val y: Int
 ) {
+    companion object {
+        private const val MIN_COORDINATE = 1
+        private const val MAX_COORDINATE = 10
+        private val VALID_RANGE = MIN_COORDINATE..MAX_COORDINATE
+    }
+
     init {
-        require(x in 1..10) { "x must be in range [1..10], but was $x" }
-        require(y in 1..10) { "y must be in range [1..10], but was $y" }
+        require(x in VALID_RANGE) { "x must be in range [$MIN_COORDINATE..$MAX_COORDINATE], but was $x" }
+        require(y in VALID_RANGE) { "y must be in range [$MIN_COORDINATE..$MAX_COORDINATE], but was $y" }
     }
 
     fun distanceTo(other: Location): Int =
