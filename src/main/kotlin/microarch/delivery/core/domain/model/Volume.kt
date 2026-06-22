@@ -4,6 +4,8 @@ data class Volume(val value: Double) {
 
     companion object {
         private const val MIN_VALUE = 0.0
+        private const val MAX_VALUE = 20.0
+        val MAX_VOLUME = Volume(MAX_VALUE)
     }
 
     init {
