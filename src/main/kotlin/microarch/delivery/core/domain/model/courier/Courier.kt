@@ -8,7 +8,7 @@ import microarch.delivery.core.domain.model.delivery.Assignment
 import microarch.delivery.core.domain.model.order.Order
 import java.util.UUID
 
-class Courier(
+class Courier private constructor(
     val id: UUID,
     val name: String,
     val location: Location,
@@ -16,21 +16,28 @@ class Courier(
     val assignments: List<Assignment>
 ) {
 
-    fun canTakeOrder(order: Order): Boolean {
-        val currentVolume = assignments.sumOf { it.volume.value }
-        return currentVolume + order.volume.value <= maxVolume.value
+    init {
+        requireNotNull(id) { "id must not be null" }
+        require(name.isNotBlank()) { "name must not be blank" }
+        requireNotNull(location) { "location must not be null" }
+        requireNotNull(maxVolume) { "maxVolume must not be null" }
+        requireNotNull(assignments) { "assignments must not be null" }
     }
 
-    fun takeOrder(order: Order): Pair<Courier, Order> {
+    fun canTakeOrder(order: Order): Boolean {
+        val currentVolume = assignments.map { it.volume }.reduceOrNull { acc, v -> acc.add(v) }
+        return if (currentVolume == null) order.volume <= maxVolume
+        else currentVolume.add(order.volume) <= maxVolume
+    }
+
+    fun takeOrder(order: Order): Courier {
         if (!canTakeOrder(order)) {
             throw DomainInvariantException(
                 GeneralErrors.valueIsInvalid("order.volume", order.volume)
             )
         }
         val assignment = Assignment.create(order.id, order.volume, order.location)
-        val updatedCourier = Courier(id, name, location, maxVolume, assignments + assignment)
-        val assignedOrder = order.assign()
-        return Pair(updatedCourier, assignedOrder)
+        return Courier(id, name, location, maxVolume, assignments + assignment)
     }
 
     fun completeAssignment(assignmentId: UUID): Courier {

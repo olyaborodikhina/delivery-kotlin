@@ -6,6 +6,7 @@ import microarch.delivery.core.domain.model.Volume
 import microarch.delivery.core.domain.model.delivery.AssignmentStatus
 import microarch.delivery.core.domain.model.order.Order
 import microarch.delivery.core.domain.model.order.OrderStatus
+import microarch.delivery.core.domain.services.OrderDispatcher
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -62,7 +63,7 @@ class CourierTest {
     @Test
     fun `should return false when cumulative volume exceeds max after existing assignments`() {
         val courier = Courier.create("Ivan", courierLocation)
-        val (courierWith18, _) = courier.takeOrder(makeOrder(18.0))
+        val courierWith18 = courier.takeOrder(makeOrder(18.0))
 
         assertFalse(courierWith18.canTakeOrder(makeOrder(3.0)))
     }
@@ -72,7 +73,7 @@ class CourierTest {
         val courier = Courier.create("Ivan", courierLocation)
         val order = makeOrder()
 
-        val (updatedCourier, assignedOrder) = courier.takeOrder(order)
+        val (updatedCourier, assignedOrder) = OrderDispatcher().dispatch(order, courier)
 
         assertEquals(1, updatedCourier.assignments.size)
         assertEquals(order.id, updatedCourier.assignments.first().orderId)
@@ -84,7 +85,7 @@ class CourierTest {
         val courier = Courier.create("Ivan", courierLocation)
         val order = makeOrder()
 
-        val (updatedCourier, _) = courier.takeOrder(order)
+        val updatedCourier = courier.takeOrder(order)
 
         assertEquals(AssignmentStatus.Assigned, updatedCourier.assignments.first().status)
     }
@@ -113,7 +114,7 @@ class CourierTest {
     fun `should complete assignment when courier is at same location`() {
         val courier = Courier.create("Ivan", courierLocation)
         val order = makeOrder(location = courierLocation)
-        val (courierWithAssignment, _) = courier.takeOrder(order)
+        val courierWithAssignment = courier.takeOrder(order)
         val assignmentId = courierWithAssignment.assignments.first().id
 
         val updatedCourier = courierWithAssignment.completeAssignment(assignmentId)
@@ -125,7 +126,7 @@ class CourierTest {
     fun `should complete assignment when courier is exactly 1 cell away`() {
         val courier = Courier.create("Ivan", Location(5, 5))
         val order = makeOrder(location = Location(5, 6))
-        val (courierWithAssignment, _) = courier.takeOrder(order)
+        val courierWithAssignment = courier.takeOrder(order)
         val assignmentId = courierWithAssignment.assignments.first().id
 
         val updatedCourier = courierWithAssignment.completeAssignment(assignmentId)
@@ -137,7 +138,7 @@ class CourierTest {
     fun `should throw when completing assignment courier is too far`() {
         val courier = Courier.create("Ivan", Location(1, 1))
         val order = makeOrder(location = Location(5, 5))
-        val (courierWithAssignment, _) = courier.takeOrder(order)
+        val courierWithAssignment = courier.takeOrder(order)
         val assignmentId = courierWithAssignment.assignments.first().id
 
         assertThrows<DomainInvariantException> {
