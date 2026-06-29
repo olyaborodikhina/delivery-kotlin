@@ -6,13 +6,21 @@ import microarch.delivery.core.domain.model.Location
 import microarch.delivery.core.domain.model.Volume
 import java.util.UUID
 
-class Assignment(
+class Assignment private constructor(
     val id: UUID,
     val orderId: UUID,
     val volume: Volume,
     val location: Location,
     val status: AssignmentStatus
 ) {
+
+    init {
+        requireNotNull(id) { "id must not be null" }
+        requireNotNull(orderId) { "orderId must not be null" }
+        requireNotNull(volume) { "volume must not be null" }
+        requireNotNull(location) { "location must not be null" }
+        requireNotNull(status) { "status must not be null" }
+    }
 
     fun complete(courierLocation: Location): Assignment {
         if (status != AssignmentStatus.Assigned) {
