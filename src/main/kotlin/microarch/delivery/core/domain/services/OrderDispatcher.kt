@@ -10,14 +10,16 @@ import org.springframework.stereotype.Service
 @Service
 class OrderDispatcherImpl : IOrderDispatcher {
 
-    override fun dispatch(order: Order, couriers: List<Courier>): Courier {
+    override fun dispatch(order: Order, couriers: List<Courier>): Pair<Courier, Order> {
         if (order.status != OrderStatus.Created) {
             throw DomainInvariantException(
                 GeneralErrors.valueIsInvalid("order.status", order.status)
             )
         }
 
-        val availableCouriers = couriers.filter { it.canTakeOrder(order) }
+        val assignedOrder = order.assign()
+
+        val availableCouriers = couriers.filter { it.canTakeOrder(assignedOrder) }
 
         if (availableCouriers.isEmpty()) {
             throw DomainInvariantException(
@@ -25,8 +27,10 @@ class OrderDispatcherImpl : IOrderDispatcher {
             )
         }
 
-        val nearest = availableCouriers.minBy { it.location.distanceTo(order.location) }
+        val nearest = availableCouriers.minBy { it.location.distanceTo(assignedOrder.location) }
 
-        return nearest.takeOrder(order)
+        val courierWithAssignment = nearest.takeOrder(assignedOrder)
+
+        return Pair(courierWithAssignment, assignedOrder)
     }
 }

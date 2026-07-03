@@ -38,9 +38,9 @@ class OrderDispatcherTest {
         val near = makeCourier(Location(4, 5))
         val far = makeCourier(Location(1, 1))
 
-        val result = dispatcher.dispatch(order, listOf(far, near))
+        val (courier, _) = dispatcher.dispatch(order, listOf(far, near))
 
-        assertEquals(near.id, result.id)
+        assertEquals(near.id, courier.id)
     }
 
     @Test
@@ -49,9 +49,9 @@ class OrderDispatcherTest {
         val onSpot = makeCourier(Location(3, 3))
         val nearby = makeCourier(Location(3, 4))
 
-        val result = dispatcher.dispatch(order, listOf(nearby, onSpot))
+        val (courier, _) = dispatcher.dispatch(order, listOf(nearby, onSpot))
 
-        assertEquals(onSpot.id, result.id)
+        assertEquals(onSpot.id, courier.id)
     }
 
     @Test
@@ -59,11 +59,21 @@ class OrderDispatcherTest {
         val order = makeOrder(location = Location(2, 2))
         val courier = makeCourier(Location(1, 1))
 
-        val result = dispatcher.dispatch(order, listOf(courier))
+        val (result, _) = dispatcher.dispatch(order, listOf(courier))
 
         assertEquals(1, result.assignments.size)
         assertEquals(order.id, result.assignments.first().orderId)
         assertEquals(AssignmentStatus.Assigned, result.assignments.first().status)
+    }
+
+    @Test
+    fun `should return order with Assigned status after dispatch`() {
+        val order = makeOrder(location = Location(2, 2))
+        val courier = makeCourier(Location(1, 1))
+
+        val (_, updatedOrder) = dispatcher.dispatch(order, listOf(courier))
+
+        assertEquals(OrderStatus.Assigned, updatedOrder.status)
     }
 
     @Test
@@ -111,9 +121,9 @@ class OrderDispatcherTest {
         val fullCourier = makeCourier(Location(4, 5)).takeOrder(makeOrder(volume = 19.0))
         val availableCourier = makeCourier(Location(1, 1))
 
-        val result = dispatcher.dispatch(order, listOf(fullCourier, availableCourier))
+        val (courier, _) = dispatcher.dispatch(order, listOf(fullCourier, availableCourier))
 
-        assertEquals(availableCourier.id, result.id)
+        assertEquals(availableCourier.id, courier.id)
     }
 
     @Test
@@ -127,13 +137,22 @@ class OrderDispatcherTest {
     }
 
     @Test
+    fun `should not mutate input order when dispatching`() {
+        val order = makeOrder()
+
+        dispatcher.dispatch(order, listOf(makeCourier()))
+
+        assertEquals(OrderStatus.Created, order.status)
+    }
+
+    @Test
     fun `should pick closer courier when two are equidistant by choosing first by minBy`() {
         val order = makeOrder(location = Location(5, 5))
         val courierA = makeCourier(Location(3, 5))
         val courierB = makeCourier(Location(7, 5))
 
-        val result = dispatcher.dispatch(order, listOf(courierA, courierB))
+        val (courier, _) = dispatcher.dispatch(order, listOf(courierA, courierB))
 
-        assertEquals(courierA.id, result.id)
+        assertEquals(courierA.id, courier.id)
     }
 }
