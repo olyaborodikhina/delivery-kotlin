@@ -5,8 +5,6 @@ import microarch.delivery.core.domain.model.Location
 import microarch.delivery.core.domain.model.Volume
 import microarch.delivery.core.domain.model.delivery.AssignmentStatus
 import microarch.delivery.core.domain.model.order.Order
-import microarch.delivery.core.domain.model.order.OrderStatus
-import microarch.delivery.core.domain.services.OrderDispatcher
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -69,15 +67,14 @@ class CourierTest {
     }
 
     @Test
-    fun `should take order and return updated courier and assigned order`() {
+    fun `should take order and return updated courier with assignment`() {
         val courier = Courier.create("Ivan", courierLocation)
         val order = makeOrder()
 
-        val (updatedCourier, assignedOrder) = OrderDispatcher().dispatch(order, courier)
+        val updatedCourier = courier.takeOrder(order)
 
         assertEquals(1, updatedCourier.assignments.size)
         assertEquals(order.id, updatedCourier.assignments.first().orderId)
-        assertEquals(OrderStatus.Assigned, assignedOrder.status)
     }
 
     @Test
